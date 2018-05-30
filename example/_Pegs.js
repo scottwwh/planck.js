@@ -32,10 +32,20 @@ planck.testbed('Pegs', function(testbed) {
   var world = pl.World(Vec2(0, 0));
 
   // Mouse handler
+  let forceStart = null;
   const canvas = document.querySelector('canvas');
-  canvas.addEventListener('mouseup', applyImpulse);
-  function applyImpulse(e) {
-    // console.log(testbed.width, testbed.height);
+  canvas.addEventListener('mousedown', e => {
+    forceStart = new Date();
+    console.log(`Start building force at ${forceStart.getTime()}`);
+  });
+  canvas.addEventListener('mouseup', releaseForce);
+  function releaseForce(e) {
+
+    const s = (new Date().getTime() - forceStart.getTime()) / 1000;
+    const force = s * 20;
+    console.log(`Force of ${force} released after ${s} seconds`);
+
+    // This works but may be cleaner way?
     const SCALE = 10;
     const sourcePos = Vec2(
       ( e.offsetX - canvas.width * 0.5 ) / SCALE,
@@ -51,18 +61,14 @@ planck.testbed('Pegs', function(testbed) {
     // console.log(bouncers.length);    
     bouncers.forEach(el => {
       const pos = el.getPosition();
-      // console.log(pos);
-      const blar = Vec2();
+      const vec = Vec2();
       for (const k in pos) {
-        blar[k] = pos[k] - sourcePos[k]
+        vec[k] = pos[k] - sourcePos[k]
       }
-      // console.log(blar);
-      const rad = Math.atan2(blar.y, blar.x);
-      // console.log('angle:', Math.atan2(blar.y, blar.x));
-      const force = 15;
+      const rad = Math.atan2(vec.y, vec.x);
       const impulse = Math.polar(force, rad);
-      // console.log(force, impulse);
-      // console.log(el.isAwake());
+
+      // Impulse only works on woke bodies
       if (el.isAwake()) {
         el.applyLinearImpulse( Vec2(impulse.x, impulse.y), sourcePos );
       } else {
@@ -96,7 +102,7 @@ planck.testbed('Pegs', function(testbed) {
     restitution: 1 // ,
     // userData: 'rail'    
   }
-  const pegs = generateRadialCoordinates(7, 12);
+  const pegs = generateRadialCoordinates(9, 13);
   pegs.forEach(vec2 => {
     const peg = world.createBody();
     peg.createFixture(pl.Circle(2, 2), pegFixDef);
@@ -113,11 +119,38 @@ planck.testbed('Pegs', function(testbed) {
     // userData: 'rail'    
   };
   for (let i = 0; i < segments; i = i + 2) {
-    var bar = world.createBody();
+    var segment = world.createBody();
     const a = Math.polar(radius, angle * i);
     const b = Math.polar(radius, angle * (i + 1));
-    bar.createFixture(pl.Edge(Vec2(a.x, a.y), Vec2(b.x, b.y)), fixDef);
+    segment.createFixture(pl.Edge(Vec2(a.x, a.y), Vec2(b.x, b.y)), fixDef);
   }
+
+
+  function funk() {
+    // const segments = 36;
+    // const radius = 20;
+    // const angle = Math.PI * 2 / segments;
+    const fixDef = {
+      friction: 0.1,
+      restitution: 1 // ,
+      // userData: 'rail'    
+    };
+    // for (let i = 0; i < segments; i = i + 2) {
+      var body = world.createBody();
+      var vec1 = Vec2(1, 1);
+
+      fixDef.shape = pl.Circle(2);
+      console.log(fixDef.shape);
+      // fixDef.shape.setLocalPosition(0, 4);
+      // circle.set(1, 3);
+      // const a = Math.polar(radius, angle * i);
+      // const b = Math.polar(radius, angle * (i + 1));
+      body.createFixture(fixDef);
+      body.setPosition(vec1);
+    // }
+  
+  }
+  funk();
 
 
   const bouncerFixDef = {
@@ -136,8 +169,6 @@ planck.testbed('Pegs', function(testbed) {
       center : Vec2(),
       I : 1
     });
-    // const impulse = new Vec2(10, 10);
-    // body.applyLinearImpulse( impulse, body.getPosition() );
     bouncers.push(body);
   });
 
